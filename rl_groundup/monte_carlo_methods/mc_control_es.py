@@ -94,8 +94,8 @@ def mc_control(env, n_episodes):
 
 if __name__ == '__main__':
     env = gym.make('Blackjack-v0')
-    n_episodes_control = 1000
-    n_episodes_prediction = 1000
+    n_episodes_control = 200000
+    n_episodes_prediction = 200000
 
     print('Starting control:\n')
     policy = mc_control(env, n_episodes_control)
