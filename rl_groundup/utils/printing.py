@@ -2,6 +2,7 @@ import sys
 import numpy as np
 
 def print_episode(episode, n_episodes):
+    '''Readable output during trainining.'''
     sys.stdout.write("\033[F") # back to previous line.
     sys.stdout.write("\033[K") # clear line.
     n_bars = int((episode/n_episodes) * 25)

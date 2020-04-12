@@ -1,3 +1,4 @@
+# Created by Tristan Bester.
 import sys
 import gym
 sys.path.append('../')
@@ -78,7 +79,6 @@ def mc_control(env, n_episodes):
             print_episode(episode, n_episodes)
     print_episode(n_episodes, n_episodes)
     return policy
-
 
 
 if __name__ == '__main__':
