@@ -7,9 +7,20 @@ from itertools import product
 from fv_mc_prediction import mc_pred, plot_value_functions
 from utils import print_episode
 
+'''
+Monte Carlo control with Exploring Starts used to find the optimal policy
+for the blackjack environment defined on page 76 of "Reinforcement Learning:
+An Introduction."
+Algorithm available on page 81.
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
+
 
 def get_init_policy():
-    '''Return initial policy used in Monte-Carlo ES algorithm.'''
+    '''Return initial policy used in Monte Carlo ES algorithm.'''
     # Initialize policy to always hit. This ensures for all possible states
     # where player hand is less than 12 the player chooses the optimal action.
     # As is shown in the book, the only states we are interested in learning
@@ -19,7 +30,7 @@ def get_init_policy():
 
 
 def mc_control(env, n_episodes):
-    '''Monte-Carlo control with Exploring Starts.'''
+    '''Monte Carlo control with Exploring Starts.'''
     # Create required iterators and lists.
     obs_space = product(range(12,22), range(1,11), [True, False])
     states = list(obs_space)

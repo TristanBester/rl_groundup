@@ -6,6 +6,17 @@ import numpy as np
 from itertools import product
 from utils import create_surface_plot, print_episode
 
+'''
+First-visit Monte Carlo prediction used to evaluate the policy defined on page
+77 in the blackjack environment defined on page 76 of "Reinforcement Learning:
+An Introduction."
+Algorithm available on page 76.
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
+
 
 def mc_pred(env, policy, n_episodes):
     '''First-visit Monte-Carlo prediction algorithm.'''
