@@ -3,8 +3,8 @@ import numpy as np
 
 def print_episode(episode, n_episodes):
     '''Readable output during trainining.'''
-    sys.stdout.write("\033[F") # back to previous line.
-    sys.stdout.write("\033[K") # clear line.
+    sys.stdout.write("\033[F") # Back to previous line.
+    sys.stdout.write("\033[K") # Clear line.
     n_bars = int((episode/n_episodes) * 25)
     print(f'Current episode: {episode}\t[{"=" * n_bars}{"#" * (25-n_bars)}]')
 
