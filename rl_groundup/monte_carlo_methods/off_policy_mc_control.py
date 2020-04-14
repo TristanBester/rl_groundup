@@ -47,8 +47,24 @@ def behaviour_policy():
         return np.random.choice([0,2,4,8])
 
 
+def store(Q,C, target_policy, i):
+    #os.system('rm *.pkl')
+    f = open(f'Q{i}.pkl', 'wb')
+    pickle.dump(Q, f)
+    f.close()
+    f = open(f'C{i}.pkl', 'wb')
+    pickle.dump(C, f)
+    f.close()
+    f = open(f'pi{i}.pkl', 'wb')
+    pickle.dump(target_policy, f)
+    f.close()
+
+
+
 env = RaceTrack()
-n_episodes = 10000
+n_episodes = int(input())
+print(n_episodes)
+time.sleep(5)
 
 Q = {}
 C = {}
@@ -73,6 +89,8 @@ action_probas = [0.025, 0.4, 0.025, 0.05, 0.025, 0.15, 0.1, 0.2, 0.025]
 for i in range(n_episodes):
     if i % 100 == 0:
         print_episode(i, n_episodes)
+    if i % 10 == 0:
+        store(Q,C,target_policy, i)
     done = False
     obs = env.reset()
     states = [obs]
@@ -110,17 +128,7 @@ for i in range(n_episodes):
 
 
 
-os.system('rm *.pkl')
-
-f = open('Q.pkl', 'wb')
-pickle.dump(Q, f)
-f.close()
-f = open('C.pkl', 'wb')
-pickle.dump(C, f)
-f.close()
-f = open('pi.pkl', 'wb')
-pickle.dump(target_policy, f)
-f.close()
+store(Q,C,target_policy, i)
 
 
 
