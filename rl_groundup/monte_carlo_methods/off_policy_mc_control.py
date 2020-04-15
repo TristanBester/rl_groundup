@@ -1,143 +1,70 @@
 import sys
+import gym
 import numpy as np
 sys.path.append('../')
-from envs import RaceTrack
-import time
-from itertools import product
-import pickle
 from utils import print_episode
-import os
-
-def adjust_col(s):
-    pos = s[0]
-    y = pos[0]
-    vel = s[1]
-
-    if y == 0:
-        s = ((y, pos[1] - 3), vel)
-    elif y < 3:
-        s = ((y, pos[1] - 2), vel)
-    elif y == 3:
-        s = ((y, pos[1] - 1), vel)
-    elif y > 13 and y < 15:
-        s = ((y, pos[1] - 1), vel)
-    elif y > 14 and y < 23:
-        s = ((y, pos[1] - 2), vel)
-    elif y > 22 and y < 30:
-        s = ((y, pos[1] - 3), vel)
-    elif y > 29 and y < 33:
-        s = ((y, pos[1] - 4), vel)
-
-    return s
+from itertools import product, tee
+from fv_mc_prediction import mc_pred, plot_value_functions
 
 
-def behaviour_policy():
-    rand = np.random.uniform()
-    if rand < 0.4:
-        return 1
-    elif rand < 0.55:
-        return 5
-    elif rand < 0.6:
-        return 3
-    elif rand < 0.7:
-        return 6
-    elif rand < 0.9:
-        return 7
-    else:
-        return np.random.choice([0,2,4,8])
+def off_policy_mc(env, gamma, b_policy, n_episodes):
+    # Create required iterators.
+    n_hands, n_dealer, usable = tuple([env.observation_space[i].n for i in range(3)])
+    state_space = product(range(n_hands), range(n_dealer), [True, False])
+    it_states1, it_states2 = tee(state_space)
+    action_space = range(2)
+    sa_pairs = product(it_states1, action_space)
+    it_pairs1, it_pairs2 = tee(sa_pairs)
+
+    # Initialization
+    Q = dict.fromkeys(it_pairs1, 0.0)
+    C = dict.fromkeys(it_pairs2, 0.0)
+    target = dict.fromkeys(it_states2, 0)
+
+    # Solving for optimal policy.
+    for episode in range(n_episodes):
+        if episode % 10000 == 0:
+            print_episode(episode, n_episodes)
+        done = False
+        obs = env.reset()
+        states = []
+        actions = []
+        rewards = []
+
+        while not done:
+            action = b_policy(obs)
+            states.append(obs)
+            obs, reward, done, info = env.step(action)
+            actions.append(action)
+            rewards.append(reward)
+
+        G = 0
+        W = 1
+
+        for t in range(len(states)-1, -1, -1):
+            G = gamma * G + rewards[t]
+            s,a = states[t], actions[t]
+            C[(s,a)] += W
+            Q[(s,a)] += (W/C[(s,a)])*(G - Q[(s,a)])
+            action_values = [Q[s,i] for i in range(env.action_space.n)]
+            target[(s,a)] = np.argmax(action_values)
+            if a == target[(s,a)]:
+                W *= (1/0.5)
+            else:
+                break
+    print_episode(n_episodes, n_episodes)
+    return target
 
 
-def store(Q,C, target_policy, i):
-    #os.system('rm *.pkl')
-    f = open(f'Q{i}.pkl', 'wb')
-    pickle.dump(Q, f)
-    f.close()
-    f = open(f'C{i}.pkl', 'wb')
-    pickle.dump(C, f)
-    f.close()
-    f = open(f'pi{i}.pkl', 'wb')
-    pickle.dump(target_policy, f)
-    f.close()
-
-
-
-env = RaceTrack()
-n_episodes = int(input())
-print(n_episodes)
-time.sleep(5)
-
-Q = {}
-C = {}
-target_policy = {}
-curr_row = 0
-for n_rows, n_cols in env.state_space:
-    for row in range(curr_row, curr_row + n_rows):
-        positions = product([row], range(n_cols))
-        velocities = product(range(-3,1), range(-2,3))
-        states = product(positions, velocities)
-        sa_pairs = product(states, range(9))
-        for pair in sa_pairs:
-            Q[pair] = 0
-            C[pair] = 0
-    curr_row += n_rows
-
-
-gamma = 0.95
-
-action_probas = [0.025, 0.4, 0.025, 0.05, 0.025, 0.15, 0.1, 0.2, 0.025]
-
-for i in range(n_episodes):
-    if i % 100 == 0:
-        print_episode(i, n_episodes)
-    if i % 10 == 0:
-        store(Q,C,target_policy, i)
-    done = False
-    obs = env.reset()
-    states = [obs]
-
-    a = behaviour_policy()
-    actions = [a]
-    rewards = []
-
-    while not done:
-        obs, reward, done = env.step(a)
-        rewards.append(reward)
-        states.append(obs)
-        a = behaviour_policy()
-        actions.append(a)
-
-    G = 0
-    W = 1
-
-    for t in range(len(states) - 2, -1, -1):
-        G = gamma * G + rewards[t-1]
-        s = states[t]
-        a = actions[t]
-        s = adjust_col(s)
-
-        C[s,a] += W
-        Q[s,a] += (W/C[s,a]) * (G - Q[s,a])
-
-        action_values = [Q[s, action] for action in range(9)]
-        target_policy[s] = np.argmax(action_values)
-
-        if a == target_policy[s]:
-            W *= (1/action_probas[a])
-        else:
-            break
-
-
-
-store(Q,C,target_policy, i)
-
-
-
-
-
-
-'''for row in range(curr_row, curr_row + n_rows):
-    Q[row] = [0] * n_cols
-curr_row += n_rows
-
-for i,x in Q.items():
-    print(i, x)'''
+if __name__ == '__main__':
+    n_episodes_control = 3000000
+    n_episodes_prediction = 100000
+    gamma = 0.99
+    env = gym.make('Blackjack-v0')
+    b_policy = lambda x: np.random.randint(2)
+    print('Beginning control...\n')
+    target = off_policy_mc(env, gamma, b_policy, n_episodes_control)
+    print('Beginning prediction...\n')
+    V = mc_pred(env, target, n_episodes_prediction)
+    plot_value_functions(V)
+    env.close()

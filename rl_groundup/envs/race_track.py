@@ -116,15 +116,3 @@ class RaceTrack(object):
                 self.__print_col(lines[i], [19], col=['1','32','44'])
             else:
                 print(lines[i])
-
-
-'''
-env = RaceTrack(use_noise=True)
-env.reset()
-env.render()
-time.sleep(0.05)
-for i in range(300):
-    env.step(np.random.choice([i for i in range(9)]))
-    env.render()
-    time.sleep(0.05)
-'''
