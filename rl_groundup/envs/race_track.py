@@ -30,8 +30,7 @@ class RaceTrack(object):
                 else:
                     track[row,20 - w:] = 1
             curr_row += n
-        # Set start and end states.
-        #track[-1,4:10] = -1
+        # Set end states.
         track[:7,-1] = -1
         self.track = track
 
@@ -40,11 +39,12 @@ class RaceTrack(object):
         self.state = np.array([32 ,np.random.randint(4,10)], dtype='int')
         #dy, dx
         self.velocity = np.zeros(2,dtype='int')
-        return ((self.state[0], self.state[1]), (self.velocity[0], self.velocity[1]))
+        state = ((self.state[0], self.state[1]), (self.velocity[0], self.velocity[1]))
+        return self.adjust_col(state)
 
 
     def __validate_dy(self):
-        # Agent must always move in negative direction, dy contrained [0, -3].
+        # Agent must always move in negative direction, dy contrained [-3, 0].
         if self.velocity[0] > self.delta_min:
             self.velocity[0] = self.delta_min
         elif self.velocity[0] < -self.delta_max:
@@ -52,7 +52,7 @@ class RaceTrack(object):
 
 
     def __validate_dx(self):
-        # Agent horizontal vel contrained to [-5,5]
+        # Agent horizontal vel contrained to [-2,2]
         if self.velocity[1] < -2 or self.velocity[1] > 2:
             self.velocity[1] = np.sign(self.velocity[1]) * 2
 
@@ -66,25 +66,84 @@ class RaceTrack(object):
         self.__validate_dx()
 
 
+    def adjust_col(self, state):
+        '''Adjust state to remove the edges of the grid.'''
+        pos = state[0]
+        y = pos[0]
+        vel = state[1]
+
+        if y  < 2:
+            return ((y, pos[1] - 3), vel)
+        elif y < 4:
+            return ((y, pos[1] - 2), vel)
+        elif y < 5:
+            return ((y, pos[1] - 1), vel)
+        elif y > 7 and y < 15:
+            return ((y, pos[1] - 1), vel)
+        elif y > 14 and y < 23:
+            return ((y, pos[1] - 2), vel)
+        elif y > 22 and y < 30:
+            return ((y, pos[1] - 3), vel)
+        elif y > 29 and y < 33:
+            return ((y, pos[1] - 4), vel)
+        else:
+            return state
+
+    def __get_single_steps(self, dy, dx):
+        vert = np.ones(abs(dy))
+        hor = np.ones(abs(dx))
+        diff = abs(len(vert) - len(hor))
+
+        if len(hor) < len(vert):
+            hor = np.append(hor, np.zeros(diff))
+        else:
+            vert = np.append(vert, np.zeros(diff))
+
+        hor = np.sign(dx) * hor
+        vert = np.sign(dy) * vert
+        return np.c_[vert.reshape(-1,1), hor.reshape(-1,1)].astype('int')
+
+
+
+
+    def __step_valid(self, dy, dx):
+        actions = self.__get_single_steps(dy, dx)
+        start_state = self.state
+
+        x_invalid = lambda x: True if x < 0 or x > 19 else False
+        y_invalid = lambda y: True if y < 0 or y > 32 else False
+
+        # Move agent in single steps along path, test if trajectory
+        # intersects wall.
+        for a in actions:
+            start_state = start_state + a
+            self.state += a
+            if (x_invalid(start_state[1]) or
+                y_invalid(start_state[0]) or
+                self.track[start_state[0], start_state[1]] == 0):
+                return False
+        return True
+
+
     def step(self, action):
         done = False
         reward = -1
         dy, dx = self.action_space[action]
         self.__update_velocity(dy,dx)
-        self.state += self.velocity
 
-        x_invalid = lambda x: True if x < 0 or x > 19 else False
-        y_invalid = lambda y: True if y < 0 or y > 32 else False
+        if not self.__step_valid(self.velocity[0], self.velocity[1]):
+            state = self.reset()
+            return state, -1, False
+        else:
+            state = ((self.state[0], self.state[1]), (self.velocity[0], self.velocity[1]))
+            state = self.adjust_col(state)
 
-        if (x_invalid(self.state[1])
-            or y_invalid(self.state[0])
-            or not self.track[self.state[0], self.state[1]]):
-            self.reset()
-        elif self.track[self.state[0], self.state[1]] == -1:
-            reward = 0
-            done = True
-        return ((self.state[0], self.state[1]), (self.velocity[0], \
-                 self.velocity[1])), reward, done
+            # If state terminal done = True
+            if self.track[self.state[0], self.state[1]] == -1:
+                reward = 0
+                done = True
+
+            return state, reward, done
 
 
     def __print_col(self, line, idx, col=['1','32','41'], is_start=False):
