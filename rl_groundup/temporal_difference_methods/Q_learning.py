@@ -8,10 +8,10 @@ from utils import print_episode, create_line_plot
 
 
 def eps_greedy_policy(Q, s, epsilon):
-    action_values = [Q[s, i] for i in range(9)]
     if np.random.uniform() < epsilon:
         return np.random.randint(9)
     else:
+        action_values = [Q[s, i] for i in range(9)]
         return np.argmax(action_values)
 
 

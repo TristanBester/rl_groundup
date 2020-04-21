@@ -5,6 +5,8 @@ import time
 import re
 import os
 
+
+# Remove action (0,0)
 class RaceTrack(object):
     def __init__(self, use_noise=False):
         self.__init_grid()

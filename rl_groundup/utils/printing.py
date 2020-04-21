@@ -8,11 +8,12 @@ def print_episode(episode, n_episodes):
     n_bars = int((episode/n_episodes) * 25)
     print(f'Current episode: {episode}\t[{"=" * n_bars}{"#" * (25-n_bars)}]')
 
-def print_grid_world_actions(policy):
+def print_grid_world_actions(policy, shape):
+    '''!!!!!!You need to adjust DP METHODS TO WORK WITH THIS!!!!!'''
     '''Print the actions taken by the given policy in the grid world problem.'''
-    out = np.full(16, 'T')
-    for i,x in enumerate(policy[1:-1]):
-        a = np.argmax(x)
+    print(policy.shape)
+    out = np.full(policy.shape[0], 'T')
+    for i,a in enumerate(policy):
         if a == 0:
             a = '>'
         elif a == 1:
@@ -21,5 +22,5 @@ def print_grid_world_actions(policy):
             a = '^'
         else:
             a = 'V'
-        out[i+1] = a
-    print(f'Actions in deterministic optimal policy: \n{out.reshape(4,4)}')
+        out[i] = a
+    print(f'Actions in deterministic optimal policy: \n{out.reshape(shape[0], shape[1])}')

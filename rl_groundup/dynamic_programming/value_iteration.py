@@ -58,5 +58,5 @@ if __name__ == '__main__':
     gamma = 1
     V = value_iteration(env, gamma, epsilon)
     policy = get_deterministic_policy(env, V)
-    print_grid_world_actions(policy)
+    print_grid_world_actions(policy, (4,4))
     print(f'Optimal value function:\n{V.reshape(4,4)}')
