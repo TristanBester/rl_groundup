@@ -11,8 +11,7 @@ def print_episode(episode, n_episodes):
 def print_grid_world_actions(policy, shape):
     '''!!!!!!You need to adjust DP METHODS TO WORK WITH THIS!!!!!'''
     '''Print the actions taken by the given policy in the grid world problem.'''
-    print(policy.shape)
-    out = np.full(policy.shape[0], 'T')
+    out = np.full(policy.shape([0]), 'T')
     for i,a in enumerate(policy):
         if a == 0:
             a = '>'
