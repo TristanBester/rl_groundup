@@ -37,6 +37,27 @@ class Maze(object):
                                self.agent_state
 
 
+    def get_predecessor_states(self, state):
+        start_state = state
+        self.agent_state = state
+        preds = []
+        for i in range(self.action_space_size):
+            self.__handle_action(i)
+            if start_state != self.agent_state:
+                if i == RIGHT:
+                    a = LEFT
+                elif i == LEFT:
+                    a = RIGHT
+                elif i == UP:
+                    a = DOWN
+                else:
+                    a = UP
+                preds.append((self.agent_state, a))
+            self.agent_state = start_state
+        return preds
+
+
+
 
     def step(self, action):
         self.__handle_action(action)
