@@ -1,32 +1,38 @@
+# Created by Tristan Bester.
 import sys
-import time
 import heapq
 import numpy as np
 sys.path.append('../')
 from envs import Maze
-from utils import print_episode
 from itertools import product, tee
+from utils import print_episode, eps_greedy_policy, create_greedy_policy, \
+                  test_policy
 
+'''
+Prioritized sweeping used to find an optimal policy for the maze environment
+described on page 135 of "Reinforcement Learning: An Introduction."
+Algorithm available on page 140.
 
-def eps_greedy_policy(Q, s, epsilon):
-    if np.random.uniform() < epsilon:
-        return np.random.randint(4)
-    else:
-        action_values = [Q[s, i] for i in range(4)]
-        return np.argmax(action_values)
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
 
 
 def prioritized_sweeping(env, alpha, gamma, epsilon, theta, n_episodes):
+    # Create iterators.
     sa_pairs = product(range(env.observation_space_size), \
                        range(env.action_space_size))
     it_one, it_two = tee(sa_pairs)
+
+    # Initialize state-action value function and model.
     Q = dict.fromkeys(it_one, 0)
     model = {pair:(0,0) for pair in it_two}
 
     for episode in range(n_episodes):
         done = False
         obs = env.reset()
-        action = eps_greedy_policy(Q, obs, epsilon)
+        action = eps_greedy_policy(Q, obs, epsilon, env.action_space_size)
         q = []
 
         while not done:
@@ -34,14 +40,16 @@ def prioritized_sweeping(env, alpha, gamma, epsilon, theta, n_episodes):
             model[obs, action] = (reward, obs_prime)
             opt_a = np.argmax([Q[obs_prime, i] for i in range(4)])
             P = abs(reward + gamma * Q[obs_prime, opt_a] - Q[obs, action])
+            # Maintain priority queue of each state-action pair whose estimated
+            # value changes nontrivially. Prioritized by size of change.
             if P > theta:
                 # Negative P used to allow a min binary heap to be used.
                 q.append((-P, (obs, action)))
             obs = obs_prime
-            action = eps_greedy_policy(Q, obs, epsilon)
+            action = eps_greedy_policy(Q, obs, epsilon, env.action_space_size)
 
-        heapq.heapify(q)
         counter = 0
+        heapq.heapify(q)
         while len(q) > 0 and counter < n:
             counter += 1
             _, (s,a) = heapq.heappop(q)
@@ -49,11 +57,18 @@ def prioritized_sweeping(env, alpha, gamma, epsilon, theta, n_episodes):
             opt_a = np.argmax([Q[s_prime, i] for i in range(4)])
             Q[s, a] += alpha * (reward + gamma * Q[s_prime, opt_a] - Q[s,a])
 
+            # Determine the effect the change of value has on predecessor state-
+            # action pairs' values.
             for s_, a_ in env.get_predecessor_states(s):
                 r_, _ = model[s_, a_]
                 opt_a = np.argmax([Q[s, i] for i in range(4)])
                 P = abs(r_ + gamma * Q[s, opt_a] - Q[s_, a_])
+
+                # Add predecessor state-action pairs to priority queue if change
+                # causes their value to change nontrivially.
                 if P > theta:
+                    # If state-action pair already in queue, keep only the
+                    # higher priority entry.
                     ls = [i for i in q if i[1] == (s_,a_)]
                     if len(ls) > 0:
                         if ls[0][0] > -P:
@@ -68,28 +83,6 @@ def prioritized_sweeping(env, alpha, gamma, epsilon, theta, n_episodes):
     return Q
 
 
-def create_greedy_policy(env, Q):
-    policy = {}
-    for s in range(env.observation_space_size):
-        action_values = [Q[s, i] for i in range(env.action_space_size)]
-        policy[s] = np.argmax(action_values)
-    return policy
-
-
-def test_policy(env, policy, n_tests):
-    input('Press any key to begin tests.')
-    for i in range(n_tests):
-        done = False
-        obs = env.reset()
-        env.render()
-        time.sleep(0.3)
-        while not done:
-            a = policy[obs]
-            obs, _, done = env.step(a)
-            env.render()
-            time.sleep(0.3)
-
-
 if __name__ == '__main__':
     n = 10
     alpha = 0.1
@@ -100,5 +93,6 @@ if __name__ == '__main__':
     n_tests = 10
     env = Maze()
     Q = prioritized_sweeping(env, alpha, gamma, epsilon, theta, n_episodes)
-    policy = create_greedy_policy(env, Q)
+    policy = create_greedy_policy(Q, env.observation_space_size, \
+                                  env.action_space_size)
     test_policy(env, policy, n_tests)

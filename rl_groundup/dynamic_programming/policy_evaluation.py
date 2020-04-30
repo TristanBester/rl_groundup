@@ -3,6 +3,7 @@ import sys
 import numpy as np
 sys.path.append('../')
 from envs import GridWorld
+from itertools import product
 from utils import create_value_func_plot
 
 '''
@@ -39,8 +40,11 @@ def policy_evaluation(env, policy, epsilon, gamma):
 
 if __name__ == '__main__':
     env = GridWorld()
-    # All actions have eqaul probabilities of being taken.
-    policy = np.full((env.observation_space_size, env.action_space_size), 1/env.action_space_size)
+    # All actions have equal probabilities of being taken.
+    sa_pairs = product(range(env.observation_space_size),\
+                       range(env.action_space_size))
+    action_proba = 1/env.action_space_size
+    policy = dict.fromkeys(sa_pairs, action_proba)
     epsilon = 1e-5
     gamma = 1
 

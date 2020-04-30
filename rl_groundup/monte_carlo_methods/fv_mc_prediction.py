@@ -1,10 +1,10 @@
 # Created by Tristan Bester.
 import sys
 import gym
-sys.path.append('../')
 import numpy as np
+sys.path.append('../')
 from itertools import product
-from utils import create_surface_plot, print_episode
+from utils import plot_blackjack_value_functions, print_episode
 
 '''
 First-visit Monte Carlo prediction used to evaluate the policy defined on page
@@ -19,7 +19,7 @@ An Introduction. 1st ed. London: The MIT Press.
 
 
 def mc_pred(env, policy, n_episodes):
-    '''First-visit Monte-Carlo prediction algorithm.'''
+    '''First-visit Monte Carlo prediction algorithm.'''
     hands = range(12, 22)
     dealer = range(1, 11)
     usable = [True, False]
@@ -32,7 +32,7 @@ def mc_pred(env, policy, n_episodes):
 
     # For all hands less than 12 the player will hit to attain a hand in
     # the interval [12, 21]. Function prevents these states from being tracked
-    # as optimal action already known.
+    # as optimal action already known (hit).
     is_valid = lambda x: True if x[0] > 11 and x[0] < 22 else False
 
     for episode in range(n_episodes):
@@ -42,14 +42,14 @@ def mc_pred(env, policy, n_episodes):
         if is_valid(obs):
             states.append(obs)
 
-        # Generate an episode using policy.
+        # Generate an episode using given policy.
         while not done:
             action = policy[obs]
             obs, reward, done, info = env.step(action)
             if obs not in states and is_valid(obs):
                 states.append(obs)
 
-        # Append return that follows first occurance of each state visited.
+        # Append return that follows first occurrence of each state visited.
         for state in states:
             ls = returns[state]
             returns[state].append(reward)
@@ -65,21 +65,6 @@ def mc_pred(env, policy, n_episodes):
     return V
 
 
-def plot_value_functions(V):
-    '''Plot a value function for then the player does and does not
-    have a usable ace in their hand.
-    '''
-    keys = np.array(list(V.keys()))
-    keys_u = keys[keys[:,2] == 1]
-    keys_n = keys[keys[:,2] != 1]
-    z_u = [V[tuple(s)] for s in keys_u]
-    z_n = [V[tuple(s)] for s in keys_n]
-    create_surface_plot(keys_u[:, 0], keys_u[:, 1], z_u, \
-                        "Hand:","Dealer:","Usable ace:")
-    create_surface_plot(keys_n[:, 0], keys_n[:, 1], z_n, \
-                        "Hand:","Dealer:","No usable ace:")
-
-
 if __name__ == '__main__':
     env = gym.make('Blackjack-v0')
     n_episodes = 100000
@@ -89,5 +74,5 @@ if __name__ == '__main__':
     policy = dict((key, 0) if key[0] >= 20 else (key, 1) for key in possible_states)
 
     V = mc_pred(env, policy, n_episodes)
-    plot_value_functions(V)
+    plot_blackjack_value_functions(V)
     env.close()

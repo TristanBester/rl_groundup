@@ -2,9 +2,20 @@ import sys
 import gym
 import numpy as np
 sys.path.append('../')
-from utils import print_episode
 from itertools import product, tee
-from fv_mc_prediction import mc_pred, plot_value_functions
+from fv_mc_prediction import mc_pred
+from utils import print_episode, plot_blackjack_value_functions
+
+'''
+Off-policy Monte Carlo control used to find the optimal policy
+for the blackjack environment defined on page 76 of "Reinforcement Learning:
+An Introduction."
+Algorithm available on page 91.
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
 
 
 def off_policy_mc(env, gamma, b_policy, n_episodes):
@@ -31,6 +42,7 @@ def off_policy_mc(env, gamma, b_policy, n_episodes):
         actions = []
         rewards = []
 
+        # Generate an episode.
         while not done:
             action = b_policy(obs)
             states.append(obs)
@@ -41,6 +53,7 @@ def off_policy_mc(env, gamma, b_policy, n_episodes):
         G = 0
         W = 1
 
+        # Update action-value function.
         for t in range(len(states)-1, -1, -1):
             G = gamma * G + rewards[t]
             s,a = states[t], actions[t]
@@ -62,9 +75,10 @@ if __name__ == '__main__':
     gamma = 0.99
     env = gym.make('Blackjack-v0')
     b_policy = lambda x: np.random.randint(2)
+
     print('Beginning control...\n')
     target = off_policy_mc(env, gamma, b_policy, n_episodes_control)
     print('Beginning prediction...\n')
     V = mc_pred(env, target, n_episodes_prediction)
-    plot_value_functions(V)
+    plot_blackjack_value_functions(V)
     env.close()

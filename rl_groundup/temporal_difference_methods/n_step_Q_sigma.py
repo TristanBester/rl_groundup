@@ -1,21 +1,26 @@
+# Created by Tristan Bester.
 import sys
-import time
 import numpy as np
 sys.path.append('../')
 from envs import GridWorld
 from itertools import product
-from utils import print_episode
+from utils import print_episode, eps_greedy_policy, test_policy
 
+'''
+n-step Q-sigma used to estimate the optimal policy for
+the gridworld environment defined on page 48 of
+"Reinforcement Learning: An Introduction."
+Information available on page 127.
 
-def eps_greedy_policy(Q, s, epsilon):
-    if np.random.uniform() < epsilon:
-        return np.random.randint(4)
-    else:
-        action_values = [Q[s,a] for a in range(4)]
-        return np.argmax(action_values)
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
+
 
 def eps_greedy_proba(policy, s, a, epsilon):
-    '''Return the probability that action a is selected in state s.'''
+    '''Return the probability that the given epsilon-greedy policy
+    takes the specified action in the specified state.'''
     if policy[s] == a:
         return (epsilon/4) + (1-epsilon)
     else:
@@ -23,6 +28,7 @@ def eps_greedy_proba(policy, s, a, epsilon):
 
 
 def n_step_Q_sigma(env, n, alpha, gamma, epsilon, sigma, n_episodes):
+    # Initialize the policy and state-action value function.
     sa_pairs = product(range(env.observation_space_size), \
                        range(env.action_space_size))
     Q = dict.fromkeys(sa_pairs, 0)
@@ -38,7 +44,7 @@ def n_step_Q_sigma(env, n, alpha, gamma, epsilon, sigma, n_episodes):
     for episode in range(n_episodes):
         done = False
         obs = env.reset()
-        action = eps_greedy_policy(Q, obs, epsilon)
+        action = eps_greedy_policy(Q, obs, epsilon, env.action_space_size)
         states[0] = obs
         actions[0] = action
         Qs[0] = Q[obs, action]
@@ -54,7 +60,8 @@ def n_step_Q_sigma(env, n, alpha, gamma, epsilon, sigma, n_episodes):
                     T = t + 1
                     deltas[t%n] = reward - Qs[t%n]
                 else:
-                    action = eps_greedy_policy(Q, obs_prime, epsilon)
+                    action = eps_greedy_policy(Q, obs_prime, epsilon, \
+                                               env.action_space_size)
                     actions[(t+1)%n] = action
                     Qs[(t+1)%n] = Q[obs_prime, action]
 
@@ -74,32 +81,16 @@ def n_step_Q_sigma(env, n, alpha, gamma, epsilon, sigma, n_episodes):
                     Z = gamma * Z * ((1-sigma)*pis[(k+1)%n] + sigma)
                 s = states[tau%n]
                 a = actions[tau%n]
+                # Update state-action value estimate.
                 Q[s,a] += alpha * (G - Q[s,a])
                 action_values = [Q[s,i] for i in range(4)]
                 policy[s] = np.argmax(action_values)
             t += 1
         epsilon = decay(epsilon)
-        print_episode(episode, n_episodes)
+        if episode % 100 == 0:
+            print_episode(episode, n_episodes)
     print_episode(n_episodes, n_episodes)
     return policy
-
-
-def test_policy(env, policy, n_tests):
-    print('Beginning testing...\n')
-    time.sleep(2)
-    for test in range(n_tests):
-        obs = env.reset()
-        a = policy[obs]
-        env.render()
-        done = False
-        time.sleep(0.3)
-        while not done:
-            obs,_,done = env.step(a)
-            a = policy[obs]
-            env.render()
-            time.sleep(0.3)
-
-
 
 
 if __name__ == '__main__':

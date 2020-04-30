@@ -1,12 +1,20 @@
-import numpy as np
-from itertools import product
-import matplotlib.pyplot as plt
-import time
+# Created by Tristan Bester.
 import re
 import os
+import time
+import numpy as np
+from itertools import product
+
+'''
+Racetrack environment defined on page 91 of
+"Reinforcement Learning: An Introduction."
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
 
 
-# Remove action (0,0)
 class RaceTrack(object):
     def __init__(self, use_noise=False):
         self.__init_grid()
@@ -16,13 +24,14 @@ class RaceTrack(object):
         self.action_space = list(product(range(-1, 2), range(-1, 2)))
         self.state_space = [(2, 17),(2, 18),(1, 19),(2, 20), (1, 10),
                             (7, 9),(8, 8),(7, 7),(3, 6)]
+        self.observation_space_size = 333
+        self.action_space_size = 9
 
 
     def __init_grid(self):
         track = np.full((33, 20), 0)
-        specifications = [(2, 17, 0),(2, 18, 0),(1, 19, 0),(2, 20, 0),
-                          (1, 10, 1),(7, 9, 1),(8, 8, 1),(7, 7, 1),
-                          (3, 6, 1)]
+        specifications = [(2, 17, 0), (2, 18, 0),( 1, 19, 0), (2, 20, 0),
+                          (1, 10, 1), (7, 9, 1), (8, 8, 1), (7, 7, 1), (3, 6, 1)]
         curr_row = 0
         for spec in specifications:
             n, w, left = spec
@@ -32,6 +41,7 @@ class RaceTrack(object):
                 else:
                     track[row,20 - w:] = 1
             curr_row += n
+
         # Set end states.
         track[:7,-1] = -1
         self.track = track
@@ -39,14 +49,15 @@ class RaceTrack(object):
 
     def reset(self):
         self.state = np.array([32 ,np.random.randint(4,10)], dtype='int')
-        #dy, dx
+        # Velocity format: [dy, dx].
         self.velocity = np.zeros(2,dtype='int')
         state = ((self.state[0], self.state[1]), (self.velocity[0], self.velocity[1]))
         return self.adjust_col(state)
 
 
     def __validate_dy(self):
-        # Agent must always move in negative direction, dy contrained [-3, 0].
+        # Agent must always move in negative direction: dy constrained to
+        # be within interval [-3, 0].
         if self.velocity[0] > self.delta_min:
             self.velocity[0] = self.delta_min
         elif self.velocity[0] < -self.delta_max:
@@ -54,7 +65,7 @@ class RaceTrack(object):
 
 
     def __validate_dx(self):
-        # Agent horizontal vel contrained to [-2,2]
+        # Agent horizontal velocity constrained to be within interval [-2,2].
         if self.velocity[1] < -2 or self.velocity[1] > 2:
             self.velocity[1] = np.sign(self.velocity[1]) * 2
 
@@ -91,7 +102,9 @@ class RaceTrack(object):
         else:
             return state
 
+
     def __get_single_steps(self, dy, dx):
+        '''Decompose full movement into single state transitions.'''
         vert = np.ones(abs(dy))
         hor = np.ones(abs(dx))
         diff = abs(len(vert) - len(hor))
@@ -106,8 +119,6 @@ class RaceTrack(object):
         return np.c_[vert.reshape(-1,1), hor.reshape(-1,1)].astype('int')
 
 
-
-
     def __step_valid(self, dy, dx):
         actions = self.__get_single_steps(dy, dx)
         start_state = self.state
@@ -115,8 +126,8 @@ class RaceTrack(object):
         x_invalid = lambda x: True if x < 0 or x > 19 else False
         y_invalid = lambda y: True if y < 0 or y > 32 else False
 
-        # Move agent in single steps along path, test if trajectory
-        # intersects wall.
+        # Move agent in single steps along path. Test if trajectory
+        # intersects wall after each transition.
         for a in actions:
             start_state = start_state + a
             self.state += a
@@ -140,7 +151,7 @@ class RaceTrack(object):
             state = ((self.state[0], self.state[1]), (self.velocity[0], self.velocity[1]))
             state = self.adjust_col(state)
 
-            # If state terminal done = True
+            # If state terminal done set to True.
             if self.track[self.state[0], self.state[1]] == -1:
                 reward = 0
                 done = True

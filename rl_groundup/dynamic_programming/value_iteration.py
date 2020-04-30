@@ -37,18 +37,19 @@ def value_iteration(env, gamma, epsilon):
 
 def get_deterministic_policy(env, V):
     '''Return a policy that is greedy w.r.t. the given value function.'''
-    n_states = env.observation_space_size
-    n_actions = env.action_space_size
-    policy = np.zeros((n_states, n_actions), dtype='float32')
+    policy = dict.fromkeys(range(env.observation_space_size), 0)
 
-    for s in range(1,n_states-1):
+    for s in range(1,env.observation_space_size-1):
+        # Initialize values of possible actions.
         possible_states = np.full((4,1), -np.inf)
-        for a in range(n_actions):
+        for a in range(env.action_space_size):
+            # Get new state after taking action a in state s.
             n_state = env.P[s,a][1]
+            # If action is valid store action value.
             if n_state != s:
                 possible_states[a] = V[n_state]
         best_action = np.argmax(possible_states)
-        policy[s][best_action] = 1.0
+        policy[s] = best_action
     return policy
 
 
@@ -58,5 +59,5 @@ if __name__ == '__main__':
     gamma = 1
     V = value_iteration(env, gamma, epsilon)
     policy = get_deterministic_policy(env, V)
-    print_grid_world_actions(policy, (4,4))
+    print_grid_world_actions(list(policy.values()), (4,4), [0,15])
     print(f'Optimal value function:\n{V.reshape(4,4)}')

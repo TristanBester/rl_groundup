@@ -1,16 +1,20 @@
-from mpl_toolkits.mplot3d import Axes3D
+# Created by Tristan Bester.
+import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 
 def create_line_plot(x, y, x_label, y_label, title):
-    '''Create a line plot using given data.'''
+    '''Create a line plot using the given data.'''
     plt.plot(x, y)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
     plt.show()
 
+
 def create_surface_plot(x, y, z, x_label, y_label, title):
-    '''Create a surface plot using given data.'''
+    '''Create a surface plot using the given data.'''
     fig = plt.figure()
     ax = Axes3D(fig)
     surf = ax.plot_trisurf(x, y, z, cmap='jet', linewidth=0.1)
@@ -22,7 +26,7 @@ def create_surface_plot(x, y, z, x_label, y_label, title):
 
 
 def create_value_func_plot(V, size, title):
-    '''Create a plot to show the value of each state in the
+    '''Create a plot to show the value of each state in a
     grid world problem.'''
     plt.matshow(V.reshape(size),cmap='cool')
     fig = plt.gcf()
@@ -30,3 +34,17 @@ def create_value_func_plot(V, size, title):
     plt.title(title)
     plt.colorbar()
     plt.show()
+
+
+def plot_blackjack_value_functions(V):
+    '''Plot a value function for when the player does and does not
+    have a usable ace in their hand.'''
+    keys = np.array(list(V.keys()))
+    keys_u = keys[keys[:,2] == 1]
+    keys_n = keys[keys[:,2] != 1]
+    z_u = [V[tuple(s)] for s in keys_u]
+    z_n = [V[tuple(s)] for s in keys_n]
+    create_surface_plot(keys_u[:, 0], keys_u[:, 1], z_u, \
+                        'Hand:','Dealer:','Usable ace:')
+    create_surface_plot(keys_n[:, 0], keys_n[:, 1], z_n, \
+                        'Hand:','Dealer:','No usable ace:')

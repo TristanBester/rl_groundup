@@ -4,8 +4,8 @@ import gym
 sys.path.append('../')
 import numpy as np
 from itertools import product
-from fv_mc_prediction import mc_pred, plot_value_functions
-from utils import print_episode
+from fv_mc_prediction import mc_pred
+from utils import print_episode, plot_blackjack_value_functions
 
 '''
 Monte Carlo control with Exploring Starts used to find the optimal policy
@@ -20,12 +20,13 @@ An Introduction. 1st ed. London: The MIT Press.
 
 
 def get_init_policy():
-    '''Return initial policy used in Monte Carlo ES algorithm.'''
-    # Initialize policy to always hit. This ensures for all possible states
-    # where player hand is less than 12 the player chooses the optimal action.
-    # As is shown in the book, the only states we are interested in learning
-    # are those where the players hand is greater than 11.
-    possible_states = list(product(range(4,32), range(1,11), [True, False]))
+    '''Return initial policy used in Monte Carlo ES algorithm.
+       Initialize policy to always hit. This ensures for all possible states
+       where player hand is less than 12 the player chooses the optimal action.
+       As is shown in the book, the only states we are interested in learning
+       are those where the players hand is greater than 11.
+    '''
+    possible_states = product(range(4,32), range(1,11), [True, False])
     return dict.fromkeys(possible_states, 1)
 
 
@@ -37,7 +38,7 @@ def mc_control(env, n_episodes):
     sa_pairs = product(states, range(2))
     keys = list(sa_pairs)
 
-    # Initization.
+    # Initialization.
     Q = {s:np.zeros((2)) for s in states}
     returns = {pair:[] for pair in keys}
     starting_sa_pairs = list(returns.keys())
@@ -72,17 +73,17 @@ def mc_control(env, n_episodes):
                 if obs not in episode_data and is_valid(obs):
                     episode_data.append((obs,a))
 
-        # Append return that follows first occurance of each state,action pair.
+        # Append return that follows first occurrence of each state-action pair.
         for obs, a in episode_data:
             returns[obs,a].append(reward)
 
-        # Update action_value function.
+        # Update action-value function.
         for pair, G in returns.items():
             if len(G) > 0:
                 s,a = pair
                 Q[s][a] = np.mean(G)
 
-        # Update policy - make greedy w.r.t. action-value function.
+        # Update policy, make greedy w.r.t. action-value function.
         for s,ls in Q.items():
             policy[s] = np.argmax(ls)
 
@@ -101,5 +102,5 @@ if __name__ == '__main__':
     policy = mc_control(env, n_episodes_control)
     print('Starting prediction:\n')
     V = mc_pred(env, policy, n_episodes_prediction)
-    plot_value_functions(V)
+    plot_blackjack_value_functions(V)
     env.close()

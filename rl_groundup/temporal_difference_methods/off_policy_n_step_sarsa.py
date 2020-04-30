@@ -1,13 +1,26 @@
+# Created by Tristan Bester.
 import sys
-import time
 import numpy as np
 sys.path.append('../')
 from envs import GridWorld
 from itertools import product
-from utils import print_episode
+from utils import print_episode, test_policy
+
+'''
+Off-policy n-step Sarsa used to estimate the optimal policy for
+the gridworld environment defined on page 48 of
+"Reinforcement Learning: An Introduction."
+Algorithm available on page 122.
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
 
 
 def eps_greedy_proba(policy, s, a, epsilon):
+    '''Return the probability of the given epsilon-greedy policy
+    taking the specified action in the specified state.'''
     if policy[s] == a:
         return (epsilon/4) + (1-epsilon)
     else:
@@ -15,6 +28,7 @@ def eps_greedy_proba(policy, s, a, epsilon):
 
 
 def off_policy_n_step_sarsa(env, n, alpha, gamma, epsilon, n_episodes):
+    # Initialize target policy and state-action value function.
     sa_pairs = product(range(env.observation_space_size), \
                        range(env.action_space_size))
     Q = dict.fromkeys(sa_pairs, 0.0)
@@ -52,6 +66,7 @@ def off_policy_n_step_sarsa(env, n, alpha, gamma, epsilon, n_episodes):
                     s = states[i%n]
                     a = actions[i%n]
                     policy_proba = eps_greedy_proba(policy, s, a, epsilon)
+                    # 0.25 constant used as behaviour policy acts randomly.
                     p *= policy_proba/0.25
                 G = np.sum([gamma**(i-tau-1)*rewards[i%n] for i in \
                             range(tau+1, min(tau+n,T))])
@@ -61,7 +76,9 @@ def off_policy_n_step_sarsa(env, n, alpha, gamma, epsilon, n_episodes):
                     G += gamma ** n * Q[s,a]
                 s = states[tau%n]
                 a = actions[tau%n]
+                # Update state-action value estimate of the target policy.
                 Q[s,a] += alpha * p * (G - Q[s,a])
+                # Make target policy greedy w.r.t. Q.
                 action_values = [Q[s, i] for i in range(4)]
                 policy[s] = np.argmax(action_values)
             t += 1
@@ -71,20 +88,6 @@ def off_policy_n_step_sarsa(env, n, alpha, gamma, epsilon, n_episodes):
     print_episode(n_episodes, n_episodes)
     return policy
 
-def test_policy(env, policy, n_tests):
-    print('Beginning testing...\n')
-    time.sleep(2)
-    for test in range(n_tests):
-        obs = env.reset()
-        a = policy[obs]
-        env.render()
-        done = False
-        time.sleep(0.3)
-        while not done:
-            obs,_,done = env.step(a)
-            a = policy[obs]
-            env.render()
-            time.sleep(0.3)
 
 if __name__ == '__main__':
     n = 4

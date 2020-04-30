@@ -1,24 +1,30 @@
+# Created by Tristan Bester.
 import sys
-import time
 import numpy as np
 sys.path.append('../')
 from envs import Maze
 from itertools import product, tee
-from utils import print_episode, print_grid_world_actions
+from utils import print_episode, eps_greedy_policy, create_greedy_policy, \
+                  test_policy
 
+'''
+Tabular Dyna-Q used to find an optimal policy for the maze environment described
+on page 135 of "Reinforcement Learning: An Introduction."
+Algorithm available on page 135.
 
-def eps_greedy_policy(Q, s, epsilon):
-    if np.random.uniform() < epsilon:
-        return np.random.randint(4)
-    else:
-        action_values = [Q[s, i] for i in range(4)]
-        return np.argmax(action_values)
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
 
 
 def tabular_dyna_Q(env, alpha, gamma, epsilon, n_episodes, n):
+    # Create iterators.
     sa_pairs = product(range(env.observation_space_size), \
                        range(env.action_space_size))
     pairs_one, pairs_two = tee(sa_pairs)
+
+    # Initialize state-action value function and model.
     Q = dict.fromkeys(pairs_one, 0)
     model = {pair:(-1,-1) for pair in pairs_two}
 
@@ -26,13 +32,15 @@ def tabular_dyna_Q(env, alpha, gamma, epsilon, n_episodes, n):
         done = False
         obs = env.reset()
         while not done:
-            action = eps_greedy_policy(Q, obs, epsilon)
+            # Acting, model-learning and direct RL.
+            action = eps_greedy_policy(Q, obs, epsilon, env.action_space_size)
             obs_prime, reward, done = env.step(action)
             max_Q = np.argmax([Q[obs_prime, i] for i in range(4)])
             Q[obs, action] += alpha * (reward + gamma * Q[obs_prime, max_Q] - Q[obs, action])
             model[obs, action] = (reward, obs_prime)
             obs = obs_prime
 
+            # Q-planning algorithm.
             for i in range(n):
                 possible_pairs = [(s,a) for s,a in list(model.keys()) if \
                                   (model[s,a] != (-1,-1))]
@@ -48,33 +56,6 @@ def tabular_dyna_Q(env, alpha, gamma, epsilon, n_episodes, n):
     return Q
 
 
-
-
-
-
-
-def create_greedy_policy(env, Q):
-    policy = {}
-    for s in range(env.observation_space_size):
-        action_values = [Q[s, i] for i in range(env.action_space_size)]
-        policy[s] = np.argmax(action_values)
-    return policy
-
-
-def test_policy(env, policy, n_tests):
-    input('Press any key to begin tests.')
-    for i in range(n_tests):
-        done = False
-        obs = env.reset()
-        env.render()
-        time.sleep(0.3)
-        while not done:
-            a = policy[obs]
-            obs, _, done = env.step(a)
-            env.render()
-            time.sleep(0.3)
-
-
 if __name__ == '__main__':
     n = 25
     alpha = 0.1
@@ -84,5 +65,6 @@ if __name__ == '__main__':
     n_tests = 10
     env = Maze()
     Q = tabular_dyna_Q(env, alpha, gamma, epsilon, n_episodes, n)
-    policy = create_greedy_policy(env, Q)
+    policy = create_greedy_policy(Q, env.observation_space_size, \
+                                  env.action_space_size)
     test_policy(env, policy, n_tests)

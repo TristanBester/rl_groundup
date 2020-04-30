@@ -16,7 +16,7 @@ An Introduction. 1st ed. London: The MIT Press.
 
 
 def action_potential(a,t):
-    '''Calulate the potenial of the action being optimal.'''
+    '''Calulate the potential of the action being optimal.'''
     if N[a] == 0:
         return np.inf
     else:

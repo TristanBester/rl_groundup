@@ -1,10 +1,21 @@
+# Created by Tristan Bester.
 import os
 import numpy as np
 
-RIGHT = 0
-LEFT = 1
-UP = 2
-DOWN = 3
+'''
+Maze gridworld environment defined on page 135 of
+"Reinforcement Learning: An Introduction."
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
+
+
+CONST_RIGHT = 0
+CONST_LEFT = 1
+CONST_UP = 2
+CONST_DOWN = 3
 
 class Maze(object):
     def __init__(self):
@@ -14,20 +25,22 @@ class Maze(object):
         self.start_state = 18
         self.terminal_state = 8
 
+
     def reset(self):
         self.agent_state = self.start_state
         return self.agent_state
 
+
     def __handle_action(self, action):
-        if action == RIGHT:
+        if action == CONST_RIGHT:
             self.agent_state = self.agent_state+1 if self.agent_state % 9 != 8 \
                                and self.agent_state+1 not in self.wall_states \
                                else self.agent_state
-        elif action == LEFT:
+        elif action == CONST_LEFT:
             self.agent_state = self.agent_state-1 if self.agent_state % 9 != 0 \
                                and self.agent_state-1 not in self.wall_states \
                                else self.agent_state
-        elif action == UP:
+        elif action == CONST_UP:
             self.agent_state = self.agent_state-9 if self.agent_state > 8 and \
                                self.agent_state-9 not in self.wall_states else \
                                self.agent_state
@@ -38,25 +51,25 @@ class Maze(object):
 
 
     def get_predecessor_states(self, state):
+        '''Return all states from which it is possible to transition into
+        the specified state with one action.'''
         start_state = state
         self.agent_state = state
         preds = []
         for i in range(self.action_space_size):
             self.__handle_action(i)
             if start_state != self.agent_state:
-                if i == RIGHT:
-                    a = LEFT
-                elif i == LEFT:
-                    a = RIGHT
-                elif i == UP:
-                    a = DOWN
+                if i == CONST_RIGHT:
+                    a = CONST_LEFT
+                elif i == CONST_LEFT:
+                    a = CONST_RIGHT
+                elif i == CONST_UP:
+                    a = CONST_DOWN
                 else:
-                    a = UP
+                    a = CONST_UP
                 preds.append((self.agent_state, a))
             self.agent_state = start_state
         return preds
-
-
 
 
     def step(self, action):
@@ -65,7 +78,6 @@ class Maze(object):
             return self.agent_state, 1, True
         else:
             return self.agent_state, 0, False
-
 
 
     def print_char(self, ch, is_player):

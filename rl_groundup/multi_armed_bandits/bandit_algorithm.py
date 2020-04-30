@@ -26,7 +26,6 @@ selections = []
 Q = np.zeros(K)
 N = np.zeros(K)
 
-
 # Solving the problem.
 for episode in range(n_episodes):
     if np.random.random() < epsilon:

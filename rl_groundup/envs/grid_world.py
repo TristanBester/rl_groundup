@@ -1,10 +1,21 @@
+# Created by Tristan Bester.
 import os
 import numpy as np
 
-RIGHT = 0
-LEFT = 1
-UP = 2
-DOWN = 3
+'''
+Gridworld environment defined on page 48 of
+"Reinforcement Learning: An Introduction."
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
+
+
+CONST_RIGHT = 0
+CONST_LEFT = 1
+CONST_UP = 2
+CONST_DOWN = 3
 
 class GridWorld(object):
     def __init__(self):
@@ -26,11 +37,11 @@ class GridWorld(object):
                 if state in self.terminal_states:
                     self.P[state,a] = (1,state,0,True)
                 else:
-                    if a == RIGHT:
+                    if a == CONST_RIGHT:
                         n_state = state + 1 if state % 4 != 3 else state
-                    elif a == LEFT:
+                    elif a == CONST_LEFT:
                         n_state = state - 1 if state % 4 != 0 else state
-                    elif a == UP:
+                    elif a == CONST_UP:
                         n_state = state - 4 if state > 3 else state
                     else:
                         n_state = state + 4 if state < 12 else state
@@ -38,19 +49,18 @@ class GridWorld(object):
 
 
     def handle_action(self, a):
-        if a == RIGHT:
+        if a == CONST_RIGHT:
             self.agent_state = self.agent_state + 1 if self.agent_state % 4 \
                                != 3 else self.agent_state
-        elif a == LEFT:
+        elif a == CONST_LEFT:
             self.agent_state = self.agent_state - 1 if self.agent_state % 4 \
                                != 0 else self.agent_state
-        elif a == UP:
+        elif a == CONST_UP:
             self.agent_state = self.agent_state - 4 if self.agent_state > 3 \
                                else self.agent_state
         else:
             self.agent_state = self.agent_state + 4 if self.agent_state < 12 \
                                else self.agent_state
-
 
 
     def step(self, action):

@@ -4,10 +4,9 @@ import numpy as np
 sys.path.append('../')
 from envs import KArmedBandit
 from utils import create_line_plot
-import matplotlib.pyplot as plt
 
 '''
-Solution to the K-armed bandit problem. The gridient bandit algorithm has been
+Solution to the K-armed bandit problem. The gradient bandit algorithm has been
 used to solve the problem.
 Information available on page 28 of "Reinforcement Learning: An Introduction."
 Book reference:
@@ -17,7 +16,7 @@ An Introduction. 1st ed. London: The MIT Press.
 
 
 def action_probabilites(H):
-    '''Calutate the soft-max distribution of action preferences.'''
+    '''Calculate the soft-max distribution of action preferences.'''
     P = np.zeros(10)
     for a in range(10):
         P[a] = np.exp(H[a])/(np.sum([np.exp(H[i]) for i in range(10)]))
