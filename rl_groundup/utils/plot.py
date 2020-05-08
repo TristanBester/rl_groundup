@@ -48,3 +48,18 @@ def plot_blackjack_value_functions(V):
                         'Hand:','Dealer:','Usable ace:')
     create_surface_plot(keys_n[:, 0], keys_n[:, 1], z_n, \
                         'Hand:','Dealer:','No usable ace:')
+
+
+def plot_mountain_car_value_function(min_x, max_x, min_y, max_y, v, tile_coder):
+    '''Create a surface plot illustrating the value of each state-action pair
+    under a specific policy.'''
+    x = np.linspace(min_x, max_x, 20)
+    y = np.linspace(min_y, max_y, 20)
+
+    X,Y = np.meshgrid(x,y)
+    all_states = np.array([[x,y] for x,y in zip(X.ravel(),Y.ravel())])
+    all_feature_vectors = np.array([tile_coder.get_tile_code(s) for s in all_states])
+    Z = np.array([-1 * v.evaluate(x) for x in all_feature_vectors])
+    Z = Z.reshape(X.shape)
+    create_surface_plot(X.ravel(), Y.ravel(), Z.ravel(), 'Position:', \
+    'Velocity:', 'Mountain car value function::')

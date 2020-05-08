@@ -35,3 +35,13 @@ def test_policy(env, policy, n_tests):
             obs, _, done = env.step(a)
             env.render()
             time.sleep(0.3)
+
+
+def eps_greedy_func_policy(q, state, epsilon, tile_coder, n_actions):
+    '''Epsilon-greedy policy.'''
+    if np.random.uniform() < epsilon:
+        return np.random.randint(n_actions)
+    else:
+        feature_vectors = tile_coder.get_feature_vectors_for_actions(state,\
+                          n_actions)
+        return q.greedy_action(feature_vectors)
