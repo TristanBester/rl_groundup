@@ -3,7 +3,7 @@ sys.path.append('../')
 import numpy as np
 from envs import MountainCar
 from functions import LinearPolicy
-from semi_gradient_td_zero import semi_gradient_td_zero
+from semi_gradient_n_step_td import semi_gradient_n_step_td
 from utils import TileCoding, print_episode, create_line_plot, \
                   eps_greedy_func_policy, plot_mountain_car_value_function
 
@@ -44,16 +44,18 @@ if __name__ == '__main__':
     alpha = 0.001
     gamma = 0.95
     n_episodes = 100
+    #n_episodes = 1
     epsilon = 0.1
     min_values = [env.min_pos, -env.max_speed]
     max_values = [env.max_pos, env.max_speed]
     n_tilings = 2
     tile_frac = 1/4
     tile_coder = TileCoding(min_values, max_values, n_tilings, tile_frac)
-    print('Beginning control...')
+    print('Beginning control...\n')
     q = semi_gradient_sarsa(env, alpha, gamma, epsilon, n_episodes, tile_coder, 1)
-    print('Beginning prediction...')
-    env = MountainCar(max_steps = 100)
-    v = semi_gradient_td_zero(env, q, alpha, gamma, 10, tile_coder)
+    np.save('weights', q.weights)
+    print('Beginning prediction...\n')
+    env = MountainCar(max_steps=200)
+    v = semi_gradient_n_step_td(env, q, 4, alpha, gamma, 1000, tile_coder)
     plot_mountain_car_value_function(env.min_pos, env.max_pos, -env.max_speed, \
                                      env.max_speed, v, tile_coder)
