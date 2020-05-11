@@ -51,7 +51,7 @@ def plot_blackjack_value_functions(V):
 
 
 def plot_mountain_car_value_function(min_x, max_x, min_y, max_y, v, tile_coder):
-    '''Create a surface plot illustrating the value of each state-action pair
+    '''Create a surface plot illustrating the value of each state 
     under a specific policy.'''
     x = np.linspace(min_x, max_x, 20)
     y = np.linspace(min_y, max_y, 20)

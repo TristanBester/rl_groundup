@@ -1,10 +1,24 @@
+# Created by Tristan Bester.
 import sys
 import numpy as np
 sys.path.append('../')
 from utils import print_episode
 from functions import LinearValueFunction
 
+'''
+n-Step semi-gradient TD for estimating the
+state-value function for a given policy.
+Algorithm available on page 171 of
+"Reinforcement Learning: An Introduction."
+
+Book reference:
+Sutton, R. and Barto, A., 2014. Reinforcement Learning:
+An Introduction. 1st ed. London: The MIT Press.
+'''
+
+
 def semi_gradient_n_step_td(env, policy, n, alpha, gamma, n_episodes, tile_coder):
+    # Initialization.
     v = LinearValueFunction(tile_coder.total_n_tiles)
     states = [None] * n
     rewards = np.zeros(n)
@@ -29,10 +43,14 @@ def semi_gradient_n_step_td(env, policy, n, alpha, gamma, n_episodes, tile_coder
                     T = t+1
             tau = t-n+1
             if tau > -1:
-                G = np.sum([gamma**(i-tau-1)*rewards[i%n] for i in range(tau+1, min(tau+n, T))])
+                # Calculate n-step return.
+                G = np.sum([gamma**(i-tau-1)*rewards[i%n] for i in range(tau+1, \
+                            min(tau+n, T))])
                 if tau+n < T:
                     G += gamma ** n * v.evaluate(states[(tau+n)%n])
-                v.weights += alpha * np.dot((G-v.evaluate(states[tau%n])), states[tau%n])
+                # Update weights.
+                v.weights += alpha * np.dot((G-v.evaluate(states[tau%n])), \
+                                             states[tau%n])
             t += 1
         print_episode(episode, n_episodes)
     print_episode(n_episodes, n_episodes)
