@@ -13,6 +13,15 @@ def create_line_plot(x, y, x_label, y_label, title):
     plt.show()
 
 
+def create_bar_plot(x, y, x_label, y_label, title):
+    '''Create a bar plot using the given data.'''
+    plt.bar(x, y)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.show()
+
+
 def create_surface_plot(x, y, z, x_label, y_label, title):
     '''Create a surface plot using the given data.'''
     fig = plt.figure()
@@ -51,7 +60,7 @@ def plot_blackjack_value_functions(V):
 
 
 def plot_mountain_car_value_function(min_x, max_x, min_y, max_y, v, tile_coder):
-    '''Create a surface plot illustrating the value of each state 
+    '''Create a surface plot illustrating the value of each state
     under a specific policy.'''
     x = np.linspace(min_x, max_x, 20)
     y = np.linspace(min_y, max_y, 20)
